@@ -1,0 +1,123 @@
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+#if UPP_SAMPLER || UPP_SAMPLER_TRACE_OR_HIGHER
+#define UPP_SAMPLER_TRACE
+#endif
+#if UPP_SAMPLER || UPP_SAMPLER_TRACE_OR_HIGHER || UPP_SAMPLER_DEBUG_OR_HIGHER
+#define UPP_SAMPLER_DEBUG
+#endif
+#if UPP_SAMPLER || UPP_SAMPLER_TRACE_OR_HIGHER || UPP_SAMPLER_DEBUG_OR_HIGHER || UPP_SAMPLER_INFO_OR_HIGHER
+#define UPP_SAMPLER_INFO
+#endif
+using System;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using UnityPerformancePortal.Report;
+
+namespace UnityPerformancePortal
+{
+<#
+foreach(var level in new string[]{ "Trace", "Debug", "Info"})
+{
+#>
+
+	public class ElapsedTime<#= level #>Sampler : IElapsedTimeSampler
+	{
+
+		public readonly string Category;
+
+		string IElapsedTimeSampler.Category => Category;
+
+		public bool Enabled
+		{
+			get => m_Enabled;
+			set => m_Enabled = value;
+		}
+
+		bool m_Enabled;
+
+#if UPP_SAMPLER_<#= level.ToUpper() #>
+		ConcurrentDictionary<string, AutoScope> m_Scope = new ConcurrentDictionary<string, AutoScope>();
+#endif
+
+		public ElapsedTime<#= level #>Sampler(string category)
+		{
+			Category = category;
+			m_Enabled = true;
+			ElapsedTime.Add(this);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public AutoScope Scope(string name)
+		{
+#if UPP_SAMPLER_<#= level.ToUpper() #>
+			if (Client.IsValid && m_Enabled)
+			{
+				return new AutoScope(Category, name, TimeInfo.Now);
+			}
+#endif
+			return default;
+		}
+
+		[System.Diagnostics.Conditional("UPP_SAMPLER_<#= level.ToUpper() #>")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Begin(string name)
+		{
+			if (!Client.IsValid || !m_Enabled)
+			{
+				return;
+			}
+			m_Scope[name] = Scope(name);
+		}
+
+		[System.Diagnostics.Conditional("UPP_SAMPLER_<#= level.ToUpper() #>")]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void End(string name)
+		{
+			if (!Client.IsValid || !m_Enabled)
+			{
+				return;
+			}
+			if (m_Scope.TryRemove(name, out var scope))
+			{
+				scope.Dispose();
+			}
+		}
+
+		public readonly struct AutoScope : IDisposable
+		{
+#if UPP_SAMPLER_<#= level.ToUpper() #>
+			public readonly string Category;
+			public readonly string Name;
+			public readonly TimeInfo TimeAt;
+
+			internal AutoScope(string category, string name, TimeInfo timeAt)
+			{
+				Category = category;
+				Name = name;
+				TimeAt = timeAt;
+			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public void Dispose()
+			{
+				if (!Client.IsValid || string.IsNullOrEmpty(Name)) return;
+				Client.Impl.Repoter.Add(new ElapsedTimeReport(Category, Name, "<#= level.ToUpper() #>", TimeAt, TimeInfo.Now));
+			}
+#else
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			public void Dispose() { }
+#endif
+		}
+	}
+<#
+}
+#>
+
+
+
+}
