@@ -9,10 +9,8 @@ namespace UnityPerformancePortal
 
 	public class ReporterSettings : IReporterSettings
 	{
-		public string AuthUrl;
-		public string AuthTicket;
+		public ReportConfig Config;
 		public HttpClientHandler HttpClientHandler;
-		public bool UseDefaultMonitor = true;
 
 		public Repoter CreateRepoter()
 		{

@@ -37,7 +37,12 @@ namespace UPP.Sample
 		{
 			yield return Client.Initialize(new ReporterSettings
 			{
-				AuthUrl = m_Address,
+				Config = new ReportConfig
+				{
+					UseDefaultMonitor = true,
+					ReportUrl = m_Address,
+					Interval = 5
+				},
 			}).Observe((task) =>
 			{
 				if (!task.IsSuccess)

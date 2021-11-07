@@ -4,7 +4,6 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityPerformancePortal.Net;
 using UnityPerformancePortal.Report;
 
 namespace UnityPerformancePortal
@@ -17,11 +16,9 @@ namespace UnityPerformancePortal
 
 		public const string TokenHeader = "x-upp-token";
 
-		string m_Token;
 		ReportConfig m_Config;
 		MemoryStream m_Stream = new MemoryStream();
 		float m_Timer;
-
 
 		public DefaultRepoter(ReporterSettings setting)
 		{
@@ -36,7 +33,7 @@ namespace UnityPerformancePortal
 
 		protected override void Update()
 		{
-			if (m_Config == null)
+			if (m_Config == null || m_Config.Interval <= 0)
 			{
 				return;
 			}
@@ -50,54 +47,27 @@ namespace UnityPerformancePortal
 
 		public override void Init(Action success, Action<Exception> error)
 		{
-			if (m_Setting.UseDefaultMonitor)
+			if (m_Setting.Config == null)
+			{
+				error?.Invoke(new Exception("config is null"));
+				return;
+			}
+			if (m_Setting.Config.UseDefaultMonitor)
 			{
 				Monitor.AddDefaultMonitor();
 			}
-			Auth().Observe(x =>
+			m_CancellationTokenSource.Token.ThrowIfCancellationRequested();
+			if (m_Setting.HttpClientHandler == null)
 			{
-				if (x.IsSuccess)
-				{
-					success?.Invoke();
-				}
-				else
-				{
-					error?.Invoke(x.Error);
-				}
-			});
-		}
-
-		AsyncTask Auth()
-		{
-			return AsyncTask.Run(async () =>
+				m_Client = new HttpClient();
+			}
+			else
 			{
-				m_CancellationTokenSource.Token.ThrowIfCancellationRequested();
-				if (m_Setting.HttpClientHandler == null)
-				{
-					m_Client = new HttpClient();
-				}
-				else
-				{
-					m_Client = new HttpClient(m_Setting.HttpClientHandler);
-				}
-				var req = new AuthRequest
-				{
-					AuthToken = m_Setting.AuthTicket,
-				};
-				var stream = new MemoryStream();
-				var writer = new StreamWriter(stream);
-				writer.Write(JsonUtility.ToJson(req));
-				writer.Flush();
-				var res = await PostAsync<AuthResponse>(m_Setting.AuthUrl, stream, m_CancellationTokenSource.Token);
-				Setup(res);
-			});
-		}
-
-		void Setup(AuthResponse response)
-		{
-			m_Token = response.Token;
-			m_Config = response.ReportConfig;
+				m_Client = new HttpClient(m_Setting.HttpClientHandler);
+			}
+			m_Config = m_Setting.Config;
 			m_Timer = m_Config.Interval;
+			success?.Invoke();
 		}
 
 		protected override void Send(ReportData report)
@@ -118,9 +88,9 @@ namespace UnityPerformancePortal
 
 				stream.Position = 0;
 				var content = new StreamContent(stream);
-				if (!string.IsNullOrEmpty(m_Token))
+				if (!string.IsNullOrEmpty(m_Config.Token))
 				{
-					content.Headers.Add(TokenHeader, m_Token);
+					content.Headers.Add(TokenHeader, m_Config.Token);
 				}
 				content.Headers.Add("ContentType", "application/json");
 				using (var response = await m_Client.PostAsync(url, content, token))

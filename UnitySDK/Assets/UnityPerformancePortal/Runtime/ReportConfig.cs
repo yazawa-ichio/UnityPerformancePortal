@@ -1,13 +1,14 @@
 using System;
 
-namespace UnityPerformancePortal.Net
+namespace UnityPerformancePortal
 {
 	[Serializable]
 	public class ReportConfig
 	{
+		public string Token;
 		public string ReportUrl;
-		public int Interval;
-		public ConnectionType ConnectionType;
+		public int Interval = 60;
+		public bool UseDefaultMonitor = true;
 		public ModuleConfig[] Modules = Array.Empty<ModuleConfig>();
 	}
 

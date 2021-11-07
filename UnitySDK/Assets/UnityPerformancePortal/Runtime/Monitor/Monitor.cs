@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using UnityPerformancePortal.Net;
 
 namespace UnityPerformancePortal
 {
