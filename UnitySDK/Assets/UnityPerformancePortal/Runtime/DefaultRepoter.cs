@@ -92,7 +92,7 @@ namespace UnityPerformancePortal
 				{
 					content.Headers.Add(TokenHeader, m_Config.Token);
 				}
-				content.Headers.Add("ContentType", "application/json");
+				content.Headers.Add("Content-Type", "application/json");
 				using (var response = await m_Client.PostAsync(url, content, token))
 				{
 					var str = await response.Content.ReadAsStringAsync();

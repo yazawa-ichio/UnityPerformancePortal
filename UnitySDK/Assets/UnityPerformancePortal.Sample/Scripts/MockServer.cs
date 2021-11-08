@@ -9,11 +9,18 @@ namespace UPP.Sample
 
 	public class MockServer : MonoBehaviour
 	{
+		[SerializeField]
+		bool m_Run;
+
 		HttpListener m_Listener;
 		bool m_End;
 
 		void Awake()
 		{
+			if (!m_Run)
+			{
+				return;
+			}
 			m_Listener = new HttpListener();
 			m_Listener.Prefixes.Add(@"http://+:8181/");
 			m_Listener.Start();
@@ -22,6 +29,10 @@ namespace UPP.Sample
 
 		void OnDestroy()
 		{
+			if (!m_Run)
+			{
+				return;
+			}
 			m_End = true;
 			m_Listener.Stop();
 			m_Listener = null;
