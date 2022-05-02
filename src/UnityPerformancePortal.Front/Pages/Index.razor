@@ -1,0 +1,114 @@
+﻿@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject PortalClient Client
+@inject HttpClient HttpClient
+@inject ISnackbar Snackbar
+@page "/"
+@page "/index"
+@using UnityPerformancePortal.Model
+
+<h4>レポートユーザーを指定</h4>
+
+
+<MudTextField @bind-Value="ReporterId" Label="ReporterId" Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Search" OnAdornmentClick="OnSubmit" Style="width:50%" />
+
+<br />
+<br />
+
+
+<MudStack Row="true">
+	<h4>直近のレポートユーザー</h4>
+	<MudSpacer></MudSpacer>
+	<MudTextField T="DateTime?" @bind-Value="StartAt" Format="s" Label="StartAt" InputType="InputType.DateTimeLocal" />
+	<MudTextField T="DateTime?" @bind-Value="EndAt" Format="s" Label="EndAt" InputType="InputType.DateTimeLocal" />
+	<MudButton Class="m-2" Variant="Variant.Filled" OnClick="OnUpdateTime" Color="Color.Primary">Update</MudButton>
+</MudStack>
+
+
+<MudTable Items="@Reporters" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@ReportersLoading" LoadingProgressColor="Color.Info">
+	<HeaderContent>
+		<MudTh></MudTh>
+		<MudTh>ReporterId</MudTh>
+		<MudTh>LastAt</MudTh>
+	</HeaderContent>
+	<RowTemplate>
+		<MudTd DataLabel="Link">
+			@if (context.LastAt != default)
+			{
+				var href = $"dashboard/{@context.ReporterId}?StartAt={@context.LastAt.AddHours(-1)}&EndAt={@context.LastAt}";
+				<MudLink Href="@href">Dashboard</MudLink>
+			}
+			else
+			{
+				var href = $"dashboard/{@context.ReporterId}?StartAt={@DateTime.UtcNow.AddDays(-1)}&EndAt={@DateTime.UtcNow}";
+				<MudLink Href="@href">Dashboard</MudLink>
+			}
+		</MudTd>
+		<MudTd DataLabel="ReporterId">@context.ReporterId</MudTd>
+		<MudTd DataLabel="LastAt">@context.LastAt.ToLocalTime()</MudTd>
+	</RowTemplate>
+</MudTable>
+
+
+
+
+@code {
+	public string ReporterId;
+
+	public Reporter[] Reporters = new Reporter[0];
+
+	public bool ReportersLoading { get; set; }
+
+	[SupplyParameterFromQuery]
+	[Parameter]
+	public DateTime? StartAt { get; set; }
+	[SupplyParameterFromQuery]
+	[Parameter]
+	public DateTime? EndAt { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			if (!StartAt.HasValue || StartAt.Value == default)
+			{
+				StartAt = DateTime.Now.AddDays(-10);
+			}
+			if (!EndAt.HasValue || EndAt.Value == default)
+			{
+				EndAt = DateTime.Now;
+			}
+			ReportersLoading = true;
+			Reporters = await Client.Reporters(StartAt.Value, EndAt.Value);
+			ReportersLoading = false;
+		}
+		catch (Exception ex)
+		{
+			Snackbar.Add("レポーターの取得に失敗しました:", Severity.Warning);
+			Console.WriteLine(ex);
+		}
+	}
+
+	void OnSubmit()
+	{
+		NavigationManager.NavigateTo($"/dashboard/{ReporterId}?StartAt={@DateTime.Now.AddHours(-1)}&EndAt={@DateTime.Now}");
+	}
+
+	async void OnUpdateTime()
+	{
+		NavigationManager.NavigateTo($"/index?StartAt={StartAt.Value}&EndAt={EndAt.Value}");
+		try
+		{
+			ReportersLoading = true;
+			Reporters = await Client.Reporters(StartAt.Value, EndAt.Value);
+			ReportersLoading = false;
+			StateHasChanged();
+		}
+		catch (Exception ex)
+		{
+			Snackbar.Add("レポーターの取得に失敗しました", Severity.Warning);
+			Console.WriteLine(ex);
+		}
+	}
+
+}

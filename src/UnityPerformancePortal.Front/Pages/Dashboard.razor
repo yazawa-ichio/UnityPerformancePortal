@@ -1,0 +1,125 @@
+﻿@inject PortalClient Client
+@inject NavigationManager NavigationManager
+@page "/dashboard/{ReporterId}"
+@using UnityPerformancePortal.Model
+@using Plotly.Blazor.Traces.ScatterLib
+
+
+<MudCard Class="m-2" Style="width:600px">
+	<MudCardHeader>
+		<CardHeaderContent>
+			<MudText Typo="Typo.h6">ReporterId</MudText>
+			<MudText Typo="Typo.body1">@ReporterId</MudText>
+		</CardHeaderContent>
+	</MudCardHeader>
+	<MudCardContent>
+		<MudTextField T="DateTime?" @bind-Value="StartAt" Format="s" Label="StartAt" InputType="InputType.DateTimeLocal" />
+		<MudTextField T="DateTime?" @bind-Value="EndAt" Format="s" Label="EndAt" InputType="InputType.DateTimeLocal" />
+	</MudCardContent>
+	<MudCardActions>
+		<MudButton OnClick="OnUpdateTime" Color="Color.Primary">Update</MudButton>
+	</MudCardActions>
+</MudCard>
+
+@if (Reports != null && Reports.Length > 0)
+{
+	<MudCard Class="m-2" Style="width:900px">
+		<MudCardHeader>
+			<MudText Typo="Typo.h5">Counter</MudText>
+			<MudSpacer />
+			<MudSelect T="string" Label="Select" MultiSelection="true" @bind-Value="CounterValue" @bind-SelectedValues="m_CounterPlot.Selects">
+				@foreach (var info in Reports.GetCounterEntryInfos())
+				{
+					<MudSelectItem T="string" Value="@info.Name">@info.Name:@info.Unit</MudSelectItem>
+				}
+			</MudSelect>
+		</MudCardHeader>
+		<MudCardContent>
+			<PlotlyChart @bind-Config="m_CounterPlot.Config" @bind-Layout="m_CounterPlot.Layout" @bind-Data="m_CounterPlot.Data" @ref="m_CounterPlot.Chart" />
+		</MudCardContent>
+	</MudCard>
+	<MudCard Class="m-2" Style="width:900px">
+		<MudCardHeader>
+			<MudText Typo="Typo.h5">Gauge</MudText>
+			<MudSpacer />
+			<MudSelect T="string" Label="Select" MultiSelection="true" @bind-Value="GaugeValue" @bind-SelectedValues="m_GaugePlot.Selects">
+				@foreach (var info in Reports.GetGaugeEntryInfos())
+				{
+					<MudSelectItem T="string" Value="@info.Name">@info.Name:@info.Unit</MudSelectItem>
+				}
+			</MudSelect>
+		</MudCardHeader>
+		<MudCardContent>
+			<PlotlyChart @bind-Config="m_GaugePlot.Config" @bind-Layout="m_GaugePlot.Layout" @bind-Data="m_GaugePlot.Data" @ref="m_GaugePlot.Chart" />
+		</MudCardContent>
+	</MudCard>
+	<MudCard Class="m-2" Style="width:900px">
+		<MudCardHeader>
+			<MudText Typo="Typo.h5">Average</MudText>
+			<MudSpacer />
+			<MudSelect T="string" Label="Select" MultiSelection="true" @bind-Value="AverageValue" @bind-SelectedValues="m_AveragePlot.Selects">
+				@foreach (var info in Reports.GetAverageEntryInfos())
+				{
+					<MudSelectItem T="string" Value="@info.Name">@info.Name:@info.Unit</MudSelectItem>
+				}
+			</MudSelect>
+		</MudCardHeader>
+		<MudCardContent>
+			<PlotlyChart @bind-Config="m_AveragePlot.Config" @bind-Layout="m_AveragePlot.Layout" @bind-Data="m_AveragePlot.Data" @ref="m_AveragePlot.Chart" />
+			<MudCheckBox @bind-Checked="m_AveragePlot.Max" Label="Max"></MudCheckBox>
+			<MudCheckBox @bind-Checked="m_AveragePlot.Min" Label="Min"></MudCheckBox>
+		</MudCardContent>
+	</MudCard>
+}
+else if (Reports != null && Reports.Length == 0)
+{
+	<MudAlert Severity="Severity.Warning">Not found ReportData.</MudAlert>
+}
+
+@code {
+
+	[Parameter]
+	public string ReporterId { get; set; }
+	[SupplyParameterFromQuery]
+	[Parameter]
+	public DateTime? StartAt { get; set; }
+	[SupplyParameterFromQuery]
+	[Parameter]
+	public DateTime? EndAt { get; set; }
+
+	public ReportData[] Reports { get; set; }
+
+	public string CounterValue { get; set; } = "Nothing selected";
+	public string GaugeValue { get; set; } = "Nothing selected";
+	public string AverageValue { get; set; } = "Nothing selected";
+
+	CounterPlot m_CounterPlot = new CounterPlot();
+	GaugePlot m_GaugePlot = new GaugePlot();
+	AveragePlot m_AveragePlot = new AveragePlot();
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (!StartAt.HasValue || !EndAt.HasValue)
+		{
+			return;
+		}
+		await UpdatePlot();
+	}
+
+	async void OnUpdateTime()
+	{
+		NavigationManager.NavigateTo($"dashboard/{ReporterId}?StartAt={StartAt}&EndAt={EndAt}");
+		await UpdatePlot();
+	}
+
+	async Task UpdatePlot()
+	{
+		var startAt = DateTime.SpecifyKind(StartAt.Value, DateTimeKind.Local);
+		var endAt = DateTime.SpecifyKind(EndAt.Value, DateTimeKind.Local);
+		Reports = await Client.Download(ReporterId, startAt.ToUniversalTime(), endAt.ToUniversalTime());
+		m_CounterPlot.Set(Reports);
+		m_GaugePlot.Set(Reports);
+		m_AveragePlot.Set(Reports);
+	}
+
+}
