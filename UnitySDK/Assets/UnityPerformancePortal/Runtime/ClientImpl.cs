@@ -15,6 +15,9 @@ namespace UnityPerformancePortal
 
 		public readonly Monitor Monitor = new Monitor();
 
+		[SerializeField]
+		string m_ReporterId;
+
 		public Repoter Repoter;
 
 		void Awake()
@@ -44,6 +47,7 @@ namespace UnityPerformancePortal
 		{
 			Repoter = config.CreateRepoter();
 			Repoter.Setup(this);
+			m_ReporterId = Repoter.Id;
 			var task = new AsyncTask();
 			Repoter.Init(task.Success, task.Fail);
 			return task;
@@ -56,6 +60,7 @@ namespace UnityPerformancePortal
 
 		public AsyncTask Stop()
 		{
+			GameObject.Destroy(gameObject);
 			return AsyncTask.Succeed;
 		}
 	}

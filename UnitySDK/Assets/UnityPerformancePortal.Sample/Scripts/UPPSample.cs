@@ -13,12 +13,12 @@ namespace UPP.Sample
 		{
 			return true;
 		}
-		public override void Update()
+		public override void Update(double delta)
 		{
 			m_FrameCounter.Inc();
 		}
 
-		public override void OnPostReport()
+		public override void OnCollectReport()
 		{
 			using (m_Sampler.Scope("FrameCounter.Sample"))
 			{
@@ -26,7 +26,6 @@ namespace UPP.Sample
 			}
 		}
 	}
-
 
 	public class UPPSample : MonoBehaviour
 	{

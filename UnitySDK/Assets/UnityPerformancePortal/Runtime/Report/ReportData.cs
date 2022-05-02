@@ -6,6 +6,8 @@ namespace UnityPerformancePortal.Report
 	[System.Serializable]
 	public class ReportData
 	{
+		public string ReporterId;
+		public string SesstionId;
 		public TimeInfo StartAt;
 		public TimeInfo EndAt;
 		public Dictionary<string, string> Meta = new Dictionary<string, string>();
@@ -27,6 +29,7 @@ namespace UnityPerformancePortal.Report
 		public void CopyTo(ReportData report)
 		{
 			report.Reset(StartAt);
+			report.ReporterId = ReporterId;
 			report.EndAt = EndAt;
 			foreach (var kvp in Meta)
 			{

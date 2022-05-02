@@ -20,9 +20,29 @@ namespace UnityPerformancePortal
 		MemoryStream m_Stream = new MemoryStream();
 		float m_Timer;
 
-		public DefaultRepoter(ReporterSettings setting)
+		public DefaultRepoter(ReporterSettings setting) : base(GetReporterId(setting.Config.ReporterId))
 		{
 			m_Setting = setting;
+		}
+
+		static string GetReporterId(string id)
+		{
+			if (string.IsNullOrEmpty(id))
+			{
+				const string Key = "UPP-ReporterId";
+				if (PlayerPrefs.HasKey(Key))
+				{
+					return PlayerPrefs.GetString(Key);
+				}
+				else
+				{
+					id = Guid.NewGuid().ToString();
+					PlayerPrefs.SetString(Key, id);
+					PlayerPrefs.Save();
+					return id;
+				}
+			}
+			return id;
 		}
 
 		public override void Dispose()
@@ -93,24 +113,33 @@ namespace UnityPerformancePortal
 					content.Headers.Add(TokenHeader, m_Config.Token);
 				}
 				content.Headers.Add("Content-Type", "application/json");
-				using (var response = await m_Client.PostAsync(url, content, token))
+				try
 				{
-					var str = await response.Content.ReadAsStringAsync();
-					if (response.IsSuccessStatusCode)
+					using (var response = await m_Client.PostAsync(url, content, token))
 					{
-						if (typeof(T) == typeof(object))
+						var str = await response.Content.ReadAsStringAsync();
+						if (response.IsSuccessStatusCode)
 						{
-							return default;
+							if (typeof(T) == typeof(object))
+							{
+								return default;
+							}
+							return JsonUtility.FromJson<T>(str);
 						}
-						return JsonUtility.FromJson<T>(str);
+						else
+						{
+							throw new Exception(str);
+						}
 					}
-					else
-					{
-						throw new Exception(str);
-					}
+				}
+				catch (Exception err)
+				{
+					m_CancellationTokenSource.Token.ThrowIfCancellationRequested();
+					Debug.LogException(err);
+					throw;
 				}
 			}
 		}
-
 	}
+
 }
