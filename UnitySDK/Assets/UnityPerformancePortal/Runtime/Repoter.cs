@@ -38,7 +38,7 @@ namespace UnityPerformancePortal
 		public void Post()
 		{
 			Monitor.OnCollectReport();
-			DoUpdate();
+			Collect();
 			var now = TimeInfo.Now;
 			m_Report.EndAt = now;
 			Send(m_Report);
@@ -64,6 +64,12 @@ namespace UnityPerformancePortal
 
 		internal void DoUpdate()
 		{
+			Collect();
+			Update();
+		}
+
+		void Collect()
+		{
 			while (m_CounterReports.TryDequeue(out var counter))
 			{
 				m_Report.Counter.Add(counter);
@@ -84,7 +90,6 @@ namespace UnityPerformancePortal
 					m_Report.ElapsedTime.Add(elapsedTime);
 				}
 			}
-			Update();
 		}
 
 		internal void Add(in CounterReport report)
