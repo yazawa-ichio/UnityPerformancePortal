@@ -19,8 +19,8 @@
 <MudStack Row="true">
 	<h4>直近のレポートユーザー</h4>
 	<MudSpacer></MudSpacer>
-	<MudTextField T="DateTime?" @bind-Value="StartAt" Format="s" Label="StartAt" InputType="InputType.DateTimeLocal" />
-	<MudTextField T="DateTime?" @bind-Value="EndAt" Format="s" Label="EndAt" InputType="InputType.DateTimeLocal" />
+	<MudTextField T="DateTime" @bind-Value="m_StartAt" Format="s" Label="StartAt" InputType="InputType.DateTimeLocal" />
+	<MudTextField T="DateTime" @bind-Value="m_EndAt" Format="s" Label="EndAt" InputType="InputType.DateTimeLocal" />
 	<MudButton Class="m-2" Variant="Variant.Filled" OnClick="OnUpdateTime" Color="Color.Primary">Update</MudButton>
 </MudStack>
 
@@ -35,17 +35,17 @@
 		<MudTd DataLabel="Link">
 			@if (context.LastAt != default)
 			{
-				var href = $"dashboard/{@context.ReporterId}?StartAt={@context.LastAt.AddHours(-1)}&EndAt={@context.LastAt}";
+				var href = $"dashboard/{@context.ReporterId}?StartAt={(@context.LastAt - (int)TimeSpan.FromHours(1).TotalMilliseconds)}&EndAt={@context.LastAt}";
 				<MudLink Href="@href">Dashboard</MudLink>
 			}
 			else
 			{
-				var href = $"dashboard/{@context.ReporterId}?StartAt={@DateTime.UtcNow.AddDays(-1)}&EndAt={@DateTime.UtcNow}";
+				var href = $"dashboard/{@context.ReporterId}?StartAt={@DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeMilliseconds()}&EndAt={@DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
 				<MudLink Href="@href">Dashboard</MudLink>
 			}
 		</MudTd>
 		<MudTd DataLabel="ReporterId">@context.ReporterId</MudTd>
-		<MudTd DataLabel="LastAt">@context.LastAt.ToLocalTime()</MudTd>
+		<MudTd DataLabel="LastAt">@DateTimeOffset.FromUnixTimeMilliseconds(context.LastAt).LocalDateTime</MudTd>
 	</RowTemplate>
 </MudTable>
 
@@ -61,25 +61,30 @@
 
 	[SupplyParameterFromQuery]
 	[Parameter]
-	public DateTime? StartAt { get; set; }
+	public long StartAt { get; set; }
 	[SupplyParameterFromQuery]
 	[Parameter]
-	public DateTime? EndAt { get; set; }
+	public long EndAt { get; set; }
+
+	DateTime m_StartAt;
+	DateTime m_EndAt;
 
 	protected override async Task OnInitializedAsync()
 	{
 		try
 		{
-			if (!StartAt.HasValue || StartAt.Value == default)
+			if (StartAt == 0)
 			{
-				StartAt = DateTime.Now.AddDays(-10);
+				StartAt = DateTimeOffset.UtcNow.AddDays(-10).ToUnixTimeMilliseconds();
 			}
-			if (!EndAt.HasValue || EndAt.Value == default)
+			if (EndAt == 0)
 			{
-				EndAt = DateTime.Now;
+				EndAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 			}
+			m_StartAt = DateTimeOffset.FromUnixTimeMilliseconds(StartAt).LocalDateTime;
+			m_EndAt = DateTimeOffset.FromUnixTimeMilliseconds(EndAt).LocalDateTime;
 			ReportersLoading = true;
-			Reporters = await Client.Reporters(StartAt.Value, EndAt.Value);
+			Reporters = await Client.Reporters(StartAt, EndAt);
 			ReportersLoading = false;
 		}
 		catch (Exception ex)
@@ -91,16 +96,18 @@
 
 	void OnSubmit()
 	{
-		NavigationManager.NavigateTo($"/dashboard/{ReporterId}?StartAt={@DateTime.Now.AddHours(-1)}&EndAt={@DateTime.Now}");
+		NavigationManager.NavigateTo($"/dashboard/{ReporterId}?StartAt={@DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeMilliseconds()}&EndAt={@DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
 	}
 
 	async void OnUpdateTime()
 	{
-		NavigationManager.NavigateTo($"/index?StartAt={StartAt.Value}&EndAt={EndAt.Value}");
+		StartAt = new DateTimeOffset(m_StartAt).ToUnixTimeMilliseconds();
+		EndAt = new DateTimeOffset(m_EndAt).ToUnixTimeMilliseconds();
+		NavigationManager.NavigateTo($"/index?StartAt={StartAt}&EndAt={EndAt}");
 		try
 		{
 			ReportersLoading = true;
-			Reporters = await Client.Reporters(StartAt.Value, EndAt.Value);
+			Reporters = await Client.Reporters(StartAt, EndAt);
 			ReportersLoading = false;
 			StateHasChanged();
 		}

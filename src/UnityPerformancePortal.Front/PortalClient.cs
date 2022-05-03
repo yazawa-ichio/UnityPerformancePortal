@@ -22,20 +22,20 @@ namespace UnityPerformancePortal.Front
 
 		public Task<Reporter[]> Reporters()
 		{
-			return Reporters(DateTime.UtcNow.AddDays(-1), DateTime.UtcNow);
+			return Reporters(DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeMilliseconds(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 		}
 
-		public async Task<Reporter[]> Reporters(DateTime startAt, DateTime? endAt)
+		public async Task<Reporter[]> Reporters(long startAt, long? endAt)
 		{
-			var param = $"startAt={startAt.ToUniversalTime()}";
+			var param = $"startAt={startAt}";
 			if (endAt.HasValue)
 			{
-				param += $"&endAt={endAt.Value.ToUniversalTime()}";
+				param += $"&endAt={endAt.Value}";
 			}
 			return await m_Client.GetFromJsonAsync<Reporter[]>($"reporters?{param}");
 		}
 
-		public async Task<ReportData[]> Download(string id, DateTime startAt, DateTime endAt, bool cache = true)
+		public async Task<ReportData[]> Download(string id, long startAt, long endAt, bool cache = true)
 		{
 			List<ReportData> ret = new List<ReportData>();
 			if (cache)
@@ -44,8 +44,8 @@ namespace UnityPerformancePortal.Front
 				foreach (var key in keys)
 				{
 					var data = key.Replace($"portal-client-cache-{id}-", "").Split(":");
-					var cacheStartAt = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(data[0])).UtcDateTime;
-					var cacheEndAt = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(data[1])).UtcDateTime;
+					var cacheStartAt = long.Parse(data[0]);
+					var cacheEndAt = long.Parse(data[1]);
 					if (startAt <= cacheStartAt && cacheStartAt <= endAt)
 					{
 						ret.Add(await m_Storage.GetItemAsync<ReportData>(key));
@@ -57,8 +57,8 @@ namespace UnityPerformancePortal.Front
 				}
 				if (ret.Count > 0)
 				{
-					var cacheStartAt = DateTimeOffset.FromUnixTimeMilliseconds(ret.Select(x => x.StartAt.UnixMillseconds).Min()).UtcDateTime;
-					var cacheEndAt = DateTimeOffset.FromUnixTimeMilliseconds(ret.Select(x => x.EndAt.UnixMillseconds).Max()).UtcDateTime;
+					var cacheStartAt = ret.Select(x => x.StartAt.UnixMillseconds).Min();
+					var cacheEndAt = ret.Select(x => x.EndAt.UnixMillseconds).Max();
 					if (cacheStartAt < startAt && endAt < cacheEndAt)
 					{
 						return ret.OrderBy(x => x.StartAt.UnixMillseconds).ToArray();

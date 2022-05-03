@@ -20,7 +20,7 @@ namespace UnityPerformancePortal.Driver.LiteDB
 		{
 			m_Database = db;
 			m_Collection = m_Database.GetCollection<ReportDataRecord>();
-			m_Collection.EnsureIndex(nameof(ReportDataRecord.StartAt));
+			m_Collection.EnsureIndex(nameof(ReportDataRecord.StartUnixMillseconds));
 		}
 
 		public void Dispose()
@@ -29,28 +29,29 @@ namespace UnityPerformancePortal.Driver.LiteDB
 			GC.SuppressFinalize(this);
 		}
 
-		public Task<ReportData[]> Download(string id, DateTime startAt, DateTime endAt)
+		public Task<ReportData[]> Download(string id, long startUnixMillseconds, long endUnixMillseconds)
 		{
 			return Task.Run(() =>
 			{
-				var query = Query.And(Query.Between(nameof(ReportDataRecord.StartAt), startAt, endAt), Query.EQ(nameof(ReportDataRecord.ReporterId), id));
+				var query = Query.And(Query.Between(nameof(ReportDataRecord.StartUnixMillseconds), startUnixMillseconds, endUnixMillseconds), Query.EQ(nameof(ReportDataRecord.ReporterId), id));
 				return m_Collection.Find(query)
 					.Select(x => JsonSerializer.Deserialize<ReportData>(x.Payload))
 					.ToArray();
 			});
 		}
 
-		public Task<Reporter[]> Reporters(DateTime startAt, DateTime endAt)
+
+		public Task<Reporter[]> Reporters(long startUnixMillseconds, long endUnixMillseconds)
 		{
 			return Task.Run(() =>
 			{
-				var query = Query.Between(nameof(ReportDataRecord.StartAt), startAt, endAt);
+				var query = Query.Between(nameof(ReportDataRecord.StartUnixMillseconds), startUnixMillseconds, endUnixMillseconds);
 				return m_Collection.Find(query)
 					.Select(x => new Reporter
 					{
 						ReporterId = x.ReporterId,
 						SessionId = x.SessionId,
-						LastAt = x.EndAt,
+						LastAt = x.EndUnixMillseconds,
 					})
 					.OrderByDescending(x => x.LastAt)
 					.DistinctBy(x => x.ReporterId + x.SessionId)
@@ -66,8 +67,8 @@ namespace UnityPerformancePortal.Driver.LiteDB
 				{
 					ReporterId = data.ReporterId,
 					SessionId = data.SessionId,
-					StartAt = DateTimeOffset.FromUnixTimeMilliseconds(data.StartAt.UnixMillseconds).UtcDateTime,
-					EndAt = DateTimeOffset.FromUnixTimeMilliseconds(data.EndAt.UnixMillseconds).UtcDateTime,
+					StartUnixMillseconds = data.StartAt.UnixMillseconds,
+					EndUnixMillseconds = data.EndAt.UnixMillseconds,
 					Payload = JsonSerializer.Serialize(data),
 				});
 			});

@@ -13,8 +13,8 @@
 		</CardHeaderContent>
 	</MudCardHeader>
 	<MudCardContent>
-		<MudTextField T="DateTime?" @bind-Value="StartAt" Format="s" Label="StartAt" InputType="InputType.DateTimeLocal" />
-		<MudTextField T="DateTime?" @bind-Value="EndAt" Format="s" Label="EndAt" InputType="InputType.DateTimeLocal" />
+		<MudTextField T="DateTime" @bind-Value="m_StartAt" Format="s" Label="StartAt" InputType="InputType.DateTimeLocal" />
+		<MudTextField T="DateTime" @bind-Value="m_EndAt" Format="s" Label="EndAt" InputType="InputType.DateTimeLocal" />
 	</MudCardContent>
 	<MudCardActions>
 		<MudButton OnClick="OnUpdateTime" Color="Color.Primary">Update</MudButton>
@@ -82,10 +82,13 @@ else if (Reports != null && Reports.Length == 0)
 	public string ReporterId { get; set; }
 	[SupplyParameterFromQuery]
 	[Parameter]
-	public DateTime? StartAt { get; set; }
+	public long StartAt { get; set; }
 	[SupplyParameterFromQuery]
 	[Parameter]
-	public DateTime? EndAt { get; set; }
+	public long EndAt { get; set; }
+
+	DateTime m_StartAt;
+	DateTime m_EndAt;
 
 	public ReportData[] Reports { get; set; }
 
@@ -99,24 +102,26 @@ else if (Reports != null && Reports.Length == 0)
 
 	protected override async Task OnInitializedAsync()
 	{
-		if (!StartAt.HasValue || !EndAt.HasValue)
+		if (StartAt == 0 || EndAt == 0)
 		{
 			return;
 		}
+		m_StartAt = DateTimeOffset.FromUnixTimeMilliseconds(StartAt).LocalDateTime;
+		m_EndAt = DateTimeOffset.FromUnixTimeMilliseconds(EndAt).LocalDateTime;
 		await UpdatePlot();
 	}
 
 	async void OnUpdateTime()
 	{
+		StartAt = new DateTimeOffset(m_StartAt).ToUnixTimeMilliseconds();
+		EndAt = new DateTimeOffset(m_EndAt).ToUnixTimeMilliseconds();
 		NavigationManager.NavigateTo($"dashboard/{ReporterId}?StartAt={StartAt}&EndAt={EndAt}");
 		await UpdatePlot();
 	}
 
 	async Task UpdatePlot()
 	{
-		var startAt = DateTime.SpecifyKind(StartAt.Value, DateTimeKind.Local);
-		var endAt = DateTime.SpecifyKind(EndAt.Value, DateTimeKind.Local);
-		Reports = await Client.Download(ReporterId, startAt.ToUniversalTime(), endAt.ToUniversalTime());
+		Reports = await Client.Download(ReporterId, StartAt, EndAt);
 		m_CounterPlot.Set(Reports);
 		m_GaugePlot.Set(Reports);
 		m_AveragePlot.Set(Reports);

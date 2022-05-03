@@ -177,13 +177,11 @@ namespace UnityPerformancePortal.Local
 		{
 			context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
 			var reporterId = context.Request.QueryString.Get("reporterId");
-			DateTime.TryParse(context.Request.QueryString.Get("startAt"), out var startAt);
-			if (!DateTime.TryParse(context.Request.QueryString.Get("endAt"), out var endAt))
+			long.TryParse(context.Request.QueryString.Get("startAt"), out var startAt);
+			if (!long.TryParse(context.Request.QueryString.Get("endAt"), out var endAt))
 			{
-				endAt = DateTime.MaxValue;
+				endAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 			}
-			startAt = DateTime.SpecifyKind(startAt, DateTimeKind.Utc);
-			endAt = DateTime.SpecifyKind(endAt, DateTimeKind.Utc);
 			var data = m_ReportDriver.Download(reporterId, startAt, endAt).Result;
 			JsonSerializer.SerializeAsync(context.Response.OutputStream, data).Wait();
 			context.Response.OutputStream.Flush();
@@ -194,13 +192,11 @@ namespace UnityPerformancePortal.Local
 		void Reporters(HttpListenerContext context)
 		{
 			context.Response.Headers.Add("Access-Control-Allow-Origin", "*");
-			DateTime.TryParse(context.Request.QueryString.Get("startAt"), out var startAt);
-			if (!DateTime.TryParse(context.Request.QueryString.Get("endAt"), out var endAt))
+			long.TryParse(context.Request.QueryString.Get("startAt"), out var startAt);
+			if (!long.TryParse(context.Request.QueryString.Get("endAt"), out var endAt))
 			{
-				endAt = DateTime.MaxValue;
+				endAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 			}
-			startAt = DateTime.SpecifyKind(startAt, DateTimeKind.Utc);
-			endAt = DateTime.SpecifyKind(endAt, DateTimeKind.Utc);
 			var data = m_ReportDriver.Reporters(startAt, endAt).Result;
 			JsonSerializer.SerializeAsync(context.Response.OutputStream, data).Wait();
 			context.Response.OutputStream.Flush();
