@@ -7,7 +7,7 @@ namespace UnityPerformancePortal.Report
 	public class ReportData
 	{
 		public string ReporterId;
-		public string SesstionId;
+		public string SessionId;
 		public TimeInfo StartAt;
 		public TimeInfo EndAt;
 		public Dictionary<string, string> Meta = new Dictionary<string, string>();

@@ -29,7 +29,7 @@ namespace UnityPerformancePortal
 		{
 			Id = id;
 			m_Report.ReporterId = id;
-			m_Report.SesstionId = SessionId;
+			m_Report.SessionId = SessionId;
 			m_Report.StartAt = TimeInfo.Now;
 			Meta["version"] = Application.version;
 			Meta["platform"] = Application.platform.ToString();
@@ -41,12 +41,12 @@ namespace UnityPerformancePortal
 			Collect();
 			var now = TimeInfo.Now;
 			m_Report.EndAt = now;
-			Send(m_Report);
-			m_Report.Reset(now);
 			foreach (var kvp in Meta)
 			{
 				m_Report.Meta[kvp.Key] = kvp.Value;
 			}
+			Send(m_Report);
+			m_Report.Reset(now);
 		}
 
 		public abstract void Init(Action success, Action<Exception> error);
