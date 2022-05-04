@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Google.Apis.Auth.OAuth2;
+using Google.Cloud.BigQuery.V2;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System;
 using UnityPerformancePortal.Driver;
+using UnityPerformancePortal.Driver.BigQuery;
 using UnityPerformancePortal.Driver.LiteDB;
 
 namespace UnityPerformancePortal.Server
@@ -26,7 +30,24 @@ namespace UnityPerformancePortal.Server
 				c.SwaggerDoc("v1", new OpenApiInfo { Title = "UnityPerformancePortal.Server", Version = "v1" });
 			});
 
-			services.AddSingleton<IReportDriver, LiteDBReportDriver>();
+			if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("UPP_BIG_QUERY_PROJECT_ID")))
+			{
+				services.AddSingleton<IReportDriver, LiteDBReportDriver>();
+			}
+			else
+			{
+				services.AddSingleton(x =>
+				{
+					GoogleCredential credential = null;
+					var json = Environment.GetEnvironmentVariable("UPP_BIG_QUERY_CREDENTIAL");
+					if (!string.IsNullOrEmpty(json))
+					{
+						credential = GoogleCredential.FromJson(json);
+					}
+					return BigQueryClient.Create(Environment.GetEnvironmentVariable("UPP_BIG_QUERY_PROJECT_ID"), credential);
+				});
+				services.AddSingleton<IReportDriver, BigQueryReportDriver>();
+			}
 		}
 
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
