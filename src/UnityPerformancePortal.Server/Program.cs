@@ -16,7 +16,7 @@ namespace UnityPerformancePortal.Server
 				.ConfigureWebHostDefaults(webBuilder =>
 				{
 					webBuilder.UseStartup<Startup>();
-					string port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+					string port = Environment.GetEnvironmentVariable("PORT");
 					if (!string.IsNullOrEmpty(port))
 					{
 						webBuilder.UseUrls($"http://0.0.0.0:{port}");

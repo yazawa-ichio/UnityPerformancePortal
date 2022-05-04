@@ -236,7 +236,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64f704ed66e452e46b80f96fa5bcb4b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Address: http://localhost:8181/report
+  m_Address: https://localhost:5001/api/post
 --- !u!4 &298370809
 Transform:
   m_ObjectHideFlags: 0
@@ -263,3 +263,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 059c14b568d92b744bdd80c7024df2a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_Run: 0
