@@ -57,17 +57,20 @@ namespace UnityPerformancePortal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Begin(string name)
 		{
+#if UPP_SAMPLER_TRACE
 			if (!Client.IsValid || !m_Enabled)
 			{
 				return;
 			}
 			m_Scope[name] = Scope(name);
+#endif
 		}
 
 		[System.Diagnostics.Conditional("UPP_SAMPLER_TRACE")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void End(string name)
 		{
+#if UPP_SAMPLER_TRACE
 			if (!Client.IsValid || !m_Enabled)
 			{
 				return;
@@ -76,6 +79,7 @@ namespace UnityPerformancePortal
 			{
 				scope.Dispose();
 			}
+#endif
 		}
 
 		public readonly struct AutoScope : IDisposable
@@ -147,17 +151,20 @@ namespace UnityPerformancePortal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Begin(string name)
 		{
+#if UPP_SAMPLER_DEBUG
 			if (!Client.IsValid || !m_Enabled)
 			{
 				return;
 			}
 			m_Scope[name] = Scope(name);
+#endif
 		}
 
 		[System.Diagnostics.Conditional("UPP_SAMPLER_DEBUG")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void End(string name)
 		{
+#if UPP_SAMPLER_DEBUG
 			if (!Client.IsValid || !m_Enabled)
 			{
 				return;
@@ -166,6 +173,7 @@ namespace UnityPerformancePortal
 			{
 				scope.Dispose();
 			}
+#endif
 		}
 
 		public readonly struct AutoScope : IDisposable
@@ -237,17 +245,20 @@ namespace UnityPerformancePortal
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Begin(string name)
 		{
+#if UPP_SAMPLER_INFO
 			if (!Client.IsValid || !m_Enabled)
 			{
 				return;
 			}
 			m_Scope[name] = Scope(name);
+#endif
 		}
 
 		[System.Diagnostics.Conditional("UPP_SAMPLER_INFO")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void End(string name)
 		{
+#if UPP_SAMPLER_INFO
 			if (!Client.IsValid || !m_Enabled)
 			{
 				return;
@@ -256,6 +267,7 @@ namespace UnityPerformancePortal
 			{
 				scope.Dispose();
 			}
+#endif
 		}
 
 		public readonly struct AutoScope : IDisposable
