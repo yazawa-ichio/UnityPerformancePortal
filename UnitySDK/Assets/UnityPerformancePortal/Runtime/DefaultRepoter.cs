@@ -128,7 +128,7 @@ namespace UnityPerformancePortal
 						}
 						else
 						{
-							throw new Exception(str);
+							throw new Exception(response.StatusCode + ":" + str);
 						}
 					}
 				}
