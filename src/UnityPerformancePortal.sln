@@ -14,7 +14,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnityPerformancePortal.Serv
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnityPerformancePortal.Front", "UnityPerformancePortal.Front\UnityPerformancePortal.Front.csproj", "{620B0536-5DAA-41F1-AEAA-311CF1FF4427}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnityPerformancePortal.Driver.BigQuery", "UnityPeformancePortal.Driver.BigQuery\UnityPerformancePortal.Driver.BigQuery.csproj", "{17223392-F89E-4267-847D-10DCE01F1320}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnityPerformancePortal.Driver.BigQuery", "UnityPerformancePortal.Driver.BigQuery\UnityPerformancePortal.Driver.BigQuery.csproj", "{17223392-F89E-4267-847D-10DCE01F1320}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnityPerformancePortal.Driver.LiteDB", "UnityPerformancePortal.Driver.LiteDB\UnityPerformancePortal.Driver.LiteDB.csproj", "{02DAC477-A3DB-4443-92DE-6AE01B81151C}"
 EndProject

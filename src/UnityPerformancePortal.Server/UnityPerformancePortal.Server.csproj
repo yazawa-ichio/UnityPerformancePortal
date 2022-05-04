@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UnityPeformancePortal.Driver.BigQuery\UnityPerformancePortal.Driver.BigQuery.csproj" />
+    <ProjectReference Include="..\UnityPerformancePortal.Driver.BigQuery\UnityPerformancePortal.Driver.BigQuery.csproj" />
     <ProjectReference Include="..\UnityPerformancePortal.Driver.LiteDB\UnityPerformancePortal.Driver.LiteDB.csproj" />
     <ProjectReference Include="..\UnityPerformancePortal\UnityPerformancePortal.csproj" />
   </ItemGroup>
