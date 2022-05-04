@@ -31,7 +31,7 @@ namespace UnityPerformancePortal
 			}
 			lock (s_Sampler)
 			{
-				s_Sampler.Add(sampler.Category, sampler);
+				s_Sampler[sampler.Category] = sampler;
 			}
 		}
 

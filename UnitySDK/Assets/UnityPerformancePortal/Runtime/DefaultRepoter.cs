@@ -1,9 +1,9 @@
 using System;
 using System.IO;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityPerformancePortal.Report;
 
 namespace UnityPerformancePortal
@@ -11,7 +11,6 @@ namespace UnityPerformancePortal
 	public class DefaultRepoter : Repoter
 	{
 		ReporterSettings m_Setting;
-		HttpClient m_Client;
 		CancellationTokenSource m_CancellationTokenSource = new CancellationTokenSource();
 
 		public const string TokenHeader = "x-upp-token";
@@ -47,7 +46,6 @@ namespace UnityPerformancePortal
 
 		public override void Dispose()
 		{
-			m_Client?.Dispose();
 			m_CancellationTokenSource.Cancel();
 		}
 
@@ -77,14 +75,6 @@ namespace UnityPerformancePortal
 				Monitor.AddDefaultMonitor();
 			}
 			m_CancellationTokenSource.Token.ThrowIfCancellationRequested();
-			if (m_Setting.HttpClientHandler == null)
-			{
-				m_Client = new HttpClient();
-			}
-			else
-			{
-				m_Client = new HttpClient(m_Setting.HttpClientHandler);
-			}
 			m_Config = m_Setting.Config;
 			m_Timer = m_Config.Interval;
 			success?.Invoke();
@@ -100,44 +90,56 @@ namespace UnityPerformancePortal
 		}
 
 
-		async Task<T> PostAsync<T>(string url, Stream stream, CancellationToken token)
+		async Task<T> PostAsync<T>(string url, MemoryStream stream, CancellationToken token)
 		{
-			while (true)
+			//while (true)
+			try
 			{
 				token.ThrowIfCancellationRequested();
-
-				stream.Position = 0;
-				var content = new StreamContent(stream);
+				var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST);
+				req.SetRequestHeader("Content-Type", "application/json");
 				if (!string.IsNullOrEmpty(m_Config.Token))
 				{
-					content.Headers.Add(TokenHeader, m_Config.Token);
+					req.SetRequestHeader(TokenHeader, m_Config.Token);
 				}
-				content.Headers.Add("Content-Type", "application/json");
-				try
+				req.downloadHandler = new DownloadHandlerBuffer();
+				req.uploadHandler = new UploadHandlerRaw(stream.ToArray());
+				if (m_Setting.CertificateHandler != null)
 				{
-					using (var response = await m_Client.PostAsync(url, content, token))
+					req.certificateHandler = m_Setting.CertificateHandler;
+				}
+				var op = req.SendWebRequest();
+				var future = new TaskCompletionSource<string>();
+				token.Register(() =>
+				{
+					future.TrySetCanceled(token);
+				});
+				op.completed += (_) =>
+				{
+					if (req.result == UnityWebRequest.Result.Success)
 					{
-						var str = await response.Content.ReadAsStringAsync();
-						if (response.IsSuccessStatusCode)
-						{
-							if (typeof(T) == typeof(object))
-							{
-								return default;
-							}
-							return JsonUtility.FromJson<T>(str);
-						}
-						else
-						{
-							throw new Exception(response.StatusCode + ":" + str);
-						}
+						future.TrySetResult(req.downloadHandler.text);
 					}
-				}
-				catch (Exception err)
+					else
+					{
+						future.TrySetException(new Exception(req.error));
+					}
+				};
+				var res = await future.Task;
+				if (typeof(T) == typeof(object))
 				{
-					m_CancellationTokenSource.Token.ThrowIfCancellationRequested();
-					Debug.LogException(err);
-					throw;
+					return default;
 				}
+				return JsonUtility.FromJson<T>(res);
+			}
+			catch (Exception err)
+			{
+				if (token.IsCancellationRequested)
+				{
+					return default;
+				}
+				Debug.LogException(err);
+				throw;
 			}
 		}
 	}
