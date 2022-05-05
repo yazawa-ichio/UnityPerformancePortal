@@ -1,0 +1,6 @@
+**/bin/
+**/obj/
+**/out/
+UnityPerformancePortal.Server/wwwroot/
+**/*.db
+Dockerfile

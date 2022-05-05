@@ -216,7 +216,6 @@ GameObject:
   m_Component:
   - component: {fileID: 298370809}
   - component: {fileID: 298370808}
-  - component: {fileID: 298370810}
   m_Layer: 0
   m_Name: Sample
   m_TagString: Untagged
@@ -236,7 +235,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 64f704ed66e452e46b80f96fa5bcb4b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Address: http://localhost:8181/report
+  m_Address: https://localhost:5001/api/post
 --- !u!4 &298370809
 Transform:
   m_ObjectHideFlags: 0
@@ -251,15 +250,3 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &298370810
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 298370807}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 059c14b568d92b744bdd80c7024df2a7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

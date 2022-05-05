@@ -1,4 +1,4 @@
-using System.Net.Http;
+using UnityEngine.Networking;
 
 namespace UnityPerformancePortal
 {
@@ -10,7 +10,7 @@ namespace UnityPerformancePortal
 	public class ReporterSettings : IReporterSettings
 	{
 		public ReportConfig Config;
-		public HttpClientHandler HttpClientHandler;
+		public CertificateHandler CertificateHandler;
 
 		public Repoter CreateRepoter()
 		{

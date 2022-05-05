@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace UnityPerformancePortal
@@ -10,6 +11,12 @@ namespace UnityPerformancePortal
 		public static bool IsValid { [MethodImpl(MethodImplOptions.AggressiveInlining)] get; private set; }
 
 		public static Monitor Monitor => Impl.Monitor;
+
+		public static string ReporterId => IsValid ? Impl.Repoter.Id : default;
+
+		public static string SessionId => IsValid ? Impl.Repoter.SessionId : default;
+
+		public static Dictionary<string, string> Meta => IsValid ? Impl.Repoter.Meta : default;
 
 		public static AsyncTask Initialize(ReporterSettings settings)
 		{

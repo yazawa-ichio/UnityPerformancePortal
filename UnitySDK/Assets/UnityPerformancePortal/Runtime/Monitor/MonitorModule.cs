@@ -6,11 +6,11 @@ namespace UnityPerformancePortal
 	{
 		public bool Disposed { get; private set; }
 
-		public abstract bool TryInit();
+		public virtual bool TryInit() => true;
 
-		public virtual void Update() { }
+		public virtual void Update(double delta) { }
 
-		public virtual void OnPostReport() { }
+		public virtual void OnCollectReport() { }
 
 		protected virtual void Dispose(bool disposing) { }
 

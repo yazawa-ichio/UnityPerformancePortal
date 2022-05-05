@@ -67,17 +67,20 @@ foreach(var level in new string[]{ "Trace", "Debug", "Info"})
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Begin(string name)
 		{
+#if UPP_SAMPLER_<#= level.ToUpper() #>
 			if (!Client.IsValid || !m_Enabled)
 			{
 				return;
 			}
 			m_Scope[name] = Scope(name);
+#endif
 		}
 
 		[System.Diagnostics.Conditional("UPP_SAMPLER_<#= level.ToUpper() #>")]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void End(string name)
 		{
+#if UPP_SAMPLER_<#= level.ToUpper() #>
 			if (!Client.IsValid || !m_Enabled)
 			{
 				return;
@@ -86,6 +89,7 @@ foreach(var level in new string[]{ "Trace", "Debug", "Info"})
 			{
 				scope.Dispose();
 			}
+#endif
 		}
 
 		public readonly struct AutoScope : IDisposable

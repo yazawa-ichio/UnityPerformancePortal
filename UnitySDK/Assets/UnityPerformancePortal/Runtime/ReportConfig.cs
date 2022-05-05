@@ -6,6 +6,7 @@ namespace UnityPerformancePortal
 	public class ReportConfig
 	{
 		public string Token;
+		public string ReporterId;
 		public string ReportUrl;
 		public int Interval = 60;
 		public bool UseDefaultMonitor = true;

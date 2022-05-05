@@ -1,0 +1,121 @@
+﻿@inject IDialogService DialogService
+@inject NavigationManager NavigationManager
+@inject PortalClient Client
+@inject HttpClient HttpClient
+@inject ISnackbar Snackbar
+@page "/"
+@page "/index"
+@using UnityPerformancePortal.Model
+
+<h4>レポートユーザーを指定</h4>
+
+
+<MudTextField @bind-Value="ReporterId" Label="ReporterId" Adornment="Adornment.End" AdornmentIcon="@Icons.Filled.Search" OnAdornmentClick="OnSubmit" Style="width:50%" />
+
+<br />
+<br />
+
+
+<MudStack Row="true">
+	<h4>直近のレポートユーザー</h4>
+	<MudSpacer></MudSpacer>
+	<MudTextField T="DateTime" @bind-Value="m_StartAt" Format="s" Label="StartAt" InputType="InputType.DateTimeLocal" />
+	<MudTextField T="DateTime" @bind-Value="m_EndAt" Format="s" Label="EndAt" InputType="InputType.DateTimeLocal" />
+	<MudButton Class="m-2" Variant="Variant.Filled" OnClick="OnUpdateTime" Color="Color.Primary">Update</MudButton>
+</MudStack>
+
+
+<MudTable Items="@Reporters" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@ReportersLoading" LoadingProgressColor="Color.Info">
+	<HeaderContent>
+		<MudTh></MudTh>
+		<MudTh>ReporterId</MudTh>
+		<MudTh>LastAt</MudTh>
+	</HeaderContent>
+	<RowTemplate>
+		<MudTd DataLabel="Link">
+			@if (context.LastAt != default)
+			{
+				var href = $"dashboard/{@context.ReporterId}?StartAt={(@context.LastAt - (int)TimeSpan.FromHours(1).TotalMilliseconds)}&EndAt={@context.LastAt}";
+				<MudLink Href="@href">Dashboard</MudLink>
+			}
+			else
+			{
+				var href = $"dashboard/{@context.ReporterId}?StartAt={@DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeMilliseconds()}&EndAt={@DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+				<MudLink Href="@href">Dashboard</MudLink>
+			}
+		</MudTd>
+		<MudTd DataLabel="ReporterId">@context.ReporterId</MudTd>
+		<MudTd DataLabel="LastAt">@DateTimeOffset.FromUnixTimeMilliseconds(context.LastAt).LocalDateTime</MudTd>
+	</RowTemplate>
+</MudTable>
+
+
+
+
+@code {
+	public string ReporterId;
+
+	public Reporter[] Reporters = new Reporter[0];
+
+	public bool ReportersLoading { get; set; }
+
+	[SupplyParameterFromQuery]
+	[Parameter]
+	public long StartAt { get; set; }
+	[SupplyParameterFromQuery]
+	[Parameter]
+	public long EndAt { get; set; }
+
+	DateTime m_StartAt;
+	DateTime m_EndAt;
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			if (StartAt == 0)
+			{
+				StartAt = DateTimeOffset.UtcNow.AddDays(-10).ToUnixTimeMilliseconds();
+			}
+			if (EndAt == 0)
+			{
+				EndAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+			}
+			m_StartAt = DateTimeOffset.FromUnixTimeMilliseconds(StartAt).LocalDateTime;
+			m_EndAt = DateTimeOffset.FromUnixTimeMilliseconds(EndAt).LocalDateTime;
+			ReportersLoading = true;
+			Reporters = await Client.Reporters(StartAt, EndAt);
+			ReportersLoading = false;
+		}
+		catch (Exception ex)
+		{
+			Snackbar.Add("レポーターの取得に失敗しました:", Severity.Warning);
+			Console.WriteLine(ex);
+		}
+	}
+
+	void OnSubmit()
+	{
+		NavigationManager.NavigateTo($"/dashboard/{ReporterId}?StartAt={@DateTimeOffset.UtcNow.AddDays(-1).ToUnixTimeMilliseconds()}&EndAt={@DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}");
+	}
+
+	async void OnUpdateTime()
+	{
+		StartAt = new DateTimeOffset(m_StartAt).ToUnixTimeMilliseconds();
+		EndAt = new DateTimeOffset(m_EndAt).ToUnixTimeMilliseconds();
+		NavigationManager.NavigateTo($"/index?StartAt={StartAt}&EndAt={EndAt}");
+		try
+		{
+			ReportersLoading = true;
+			Reporters = await Client.Reporters(StartAt, EndAt);
+			ReportersLoading = false;
+			StateHasChanged();
+		}
+		catch (Exception ex)
+		{
+			Snackbar.Add("レポーターの取得に失敗しました", Severity.Warning);
+			Console.WriteLine(ex);
+		}
+	}
+
+}

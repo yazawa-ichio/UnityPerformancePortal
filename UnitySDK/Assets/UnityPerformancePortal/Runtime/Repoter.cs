@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityPerformancePortal.Report;
 
 namespace UnityPerformancePortal
@@ -13,30 +14,39 @@ namespace UnityPerformancePortal
 		ConcurrentQueue<AverageReport> m_AverageReports = new ConcurrentQueue<AverageReport>();
 		ConcurrentQueue<ElapsedTimeReport> m_ElapsedTimeReports = new ConcurrentQueue<ElapsedTimeReport>();
 
-		public readonly Dictionary<string, string> DefaultMeta = new Dictionary<string, string>();
+		public readonly Dictionary<string, string> Meta = new Dictionary<string, string>();
 
 		ClientImpl m_Impl;
 		ReportData m_Report = new ReportData();
 
+		public string Id { get; private set; }
+
+		public string SessionId { get; private set; } = System.Guid.NewGuid().ToString();
+
 		protected Monitor Monitor => m_Impl.Monitor;
 
-		public Repoter()
+		public Repoter(string id)
 		{
+			Id = id;
+			m_Report.ReporterId = id;
+			m_Report.SessionId = SessionId;
 			m_Report.StartAt = TimeInfo.Now;
+			Meta["version"] = Application.version;
+			Meta["platform"] = Application.platform.ToString();
 		}
 
 		public void Post()
 		{
-			Monitor.OnPostReport();
-			DoUpdate();
+			Monitor.OnCollectReport();
+			Collect();
 			var now = TimeInfo.Now;
 			m_Report.EndAt = now;
-			Send(m_Report);
-			m_Report.Reset(now);
-			foreach (var kvp in DefaultMeta)
+			foreach (var kvp in Meta)
 			{
 				m_Report.Meta[kvp.Key] = kvp.Value;
 			}
+			Send(m_Report);
+			m_Report.Reset(now);
 		}
 
 		public abstract void Init(Action success, Action<Exception> error);
@@ -53,6 +63,12 @@ namespace UnityPerformancePortal
 		}
 
 		internal void DoUpdate()
+		{
+			Collect();
+			Update();
+		}
+
+		void Collect()
 		{
 			while (m_CounterReports.TryDequeue(out var counter))
 			{
@@ -74,7 +90,6 @@ namespace UnityPerformancePortal
 					m_Report.ElapsedTime.Add(elapsedTime);
 				}
 			}
-			Update();
 		}
 
 		internal void Add(in CounterReport report)
