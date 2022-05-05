@@ -130,6 +130,11 @@ namespace UnityPerformancePortal.Driver.BigQuery
 
 		public async Task<ReportData[]> Download(string id, long startUnixMillseconds, long endUnixMillseconds)
 		{
+			if (!Guid.TryParse(id, out _))
+			{
+				throw new ArgumentException("id is invalid");
+			}
+
 			var startAt = DateTimeOffset.FromUnixTimeMilliseconds(startUnixMillseconds).ToString("yyyy-MM-dd HH:mm:ss.ffffff");
 			var endAt = DateTimeOffset.FromUnixTimeMilliseconds(endUnixMillseconds).ToString("yyyy-MM-dd HH:mm:ss.ffffff");
 			var sql = @$"SELECT reporter_id,payload

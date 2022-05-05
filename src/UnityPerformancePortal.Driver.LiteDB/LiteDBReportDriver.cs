@@ -31,6 +31,10 @@ namespace UnityPerformancePortal.Driver.LiteDB
 
 		public Task<ReportData[]> Download(string id, long startUnixMillseconds, long endUnixMillseconds)
 		{
+			if (!Guid.TryParse(id, out _))
+			{
+				throw new ArgumentException("id is invalid");
+			}
 			return Task.Run(() =>
 			{
 				var query = Query.And(Query.Between(nameof(ReportDataRecord.StartUnixMillseconds), startUnixMillseconds, endUnixMillseconds), Query.EQ(nameof(ReportDataRecord.ReporterId), id));
